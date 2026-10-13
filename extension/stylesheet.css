@@ -1,0 +1,34 @@
+/* ATRI 顶栏音频可视化 —— 样式
+   字体用 Maus 机器上的「萝莉体 第二版」，找不到就退回 Noto/DejaVu，不会变成豆腐块 */
+
+.atri-visualizer {
+    padding-left: 6px;
+    padding-right: 2px;
+}
+
+.atri-divider {
+    width: 1px;
+    height: 15px;
+    margin-left: 6px;
+    margin-right: 6px;
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.atri-lyric-label {
+    /* 只用 `font` 简写这一种写法。实测（无头 Shell 里量 label 自然宽度）：
+       `font-family: 萝莉体 第二版` / `font-family: "萝莉体 第二版"` /
+       `font: 15px 萝莉体 第二版` 全都会退回默认字体（宽 285px），
+       只有 `font: 15px "萝莉体 第二版"` 真拿到萝莉体（宽 268px）。
+       字体缺失时 Pango 自己回退，不会报错。 */
+    font: 15px "萝莉体 第二版";
+    color: #f2f2f7;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+
+/* 非中文歌：一句两栏 —— 左中文（翻译） · 右原词，整体作为一个 block 居中。
+   两栏的间隔就用左栏的右内边距，省得再塞一个占位控件。 */
+.atri-lyric-zh {
+    padding-right: 16px;
+}
