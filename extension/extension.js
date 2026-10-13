@@ -653,14 +653,17 @@ export default class AtriVisualizerExtension extends Extension {
 
             // 2) 歌词：优先顶栏右侧（状态图标左边），放不下再退回线条后面
             let mode = cfg.show_lyrics ? cfg.lyric_position : 'off';
-            // 先放进右侧 box，再量"右边第一个真控件的实际左边缘"——
-            // 状态图标的**偏好宽度**会虚高一大截（实测差 400px），量实际位置才准。
             if (mode !== 'after-bars')
                 this._reparentLyrics('right');
-            const iconsLeft = mode === 'after-bars'
-                ? screenRight
-                : (this._nextSiblingLeft(Main.panel._rightBox, this._lyrics.actor) ?? screenRight);
-            const availRight = Math.floor(iconsLeft - clockRight - GAP * 2);
+            // 只用"跟自己的宽度无关"的量来算可用空档：
+            //   sideWidth = 面板分给右侧的宽度 = 面板宽的一半（时钟居中，由 panel.js 的 vfunc_allocate 决定）
+            //   iconsWidth = 状态图标那几坨的**已分配**宽度之和
+            // 关键：lyricWidth ≤ sideWidth - iconsWidth，这样 box 的 natural 永远不超过分配宽度，
+            // 图标绝不会被挤到屏幕外。（早先用"邻居的实际坐标"算会正反馈：块变宽→图标被挤出
+            // 屏幕→量到的空档更大→块更宽，实测能涨到 3898px 把整个状态区顶没了。）
+            const sideWidth = Math.max(0, Math.floor((monitor.width - centerW) / 2));
+            const iconsWidth = this._iconsWidth(Main.panel._rightBox, this._lyrics.actor);
+            const availRight = Math.max(0, Math.floor(sideWidth - iconsWidth - GAP * 2));
             const availLeft = Math.floor(availBars - barsWidth - DIVIDER_W - GAP);
 
             if (mode === 'auto')
@@ -669,8 +672,8 @@ export default class AtriVisualizerExtension extends Extension {
             let lyricWidth = 0;
             if (mode === 'right')
                 // 右侧这栏铺满「时钟 → 状态图标」之间的空档，正文在空档里居中 ——
-                // 也就是"以右侧到时间的中点为心"。超长的行在空档内省略，不碰状态图标。
-                lyricWidth = availRight;
+                // 也就是"以右侧到时间的中点为心"。超长的行在空档内省略，绝不碰状态图标。
+                lyricWidth = Math.min(availRight, sideWidth);
             else if (mode === 'after-bars')
                 lyricWidth = Math.min(cfg.lyric_width, availLeft);
 
@@ -692,7 +695,9 @@ export default class AtriVisualizerExtension extends Extension {
                 this._updateBudget_trace = Main.panel._rightBox.get_children().map(child => {
                     const [x] = child.get_transformed_position();
                     const [, width] = child.get_size();
-                    return `${Math.round(x)}+${Math.round(width)}`;
+                    const [, preferred] = child.get_preferred_width(-1);
+                    const tag = child === this._lyrics.actor ? '[词]' : (child.get_name() || '·');
+                    return `${tag}@${Math.round(x)} alloc=${Math.round(width)} pref=${Math.round(preferred)}`;
                 }).join(' ');
             }
             if (this._lyrics._width !== lyricWidth)
@@ -704,20 +709,21 @@ export default class AtriVisualizerExtension extends Extension {
         }
     }
 
-    // 同一条 box 里排在我们右边第一个"有实体"的控件的实际左边缘（用来算可用空档）
-    _nextSiblingLeft(box, actor) {
+    // 我们在右侧 box 里除自己之外的占用宽度（状态图标那一坨）——取**已分配**宽度之和。
+    // 偏好宽度会虚高（实测能差 400px），实际位置又会随自己被撑宽而变（正反馈），
+    // 只有"已分配宽度"既贴近真实观感、又跟我们的宽度无关。
+    _iconsWidth(box, exclude) {
         if (!box)
-            return null;
-        const children = box.get_children();
-        for (let i = children.indexOf(actor) + 1; i < children.length; i++) {
-            const [x] = children[i].get_transformed_position();
-            const [, width] = children[i].get_size();
-            if (Number.isFinite(x) && width > 0)
-                return x;
+            return 0;
+        let width = 0;
+        for (const child of box.get_children()) {
+            if (child === exclude)
+                continue;
+            const [childWidth] = child.get_size();
+            if (Number.isFinite(childWidth) && childWidth > 0)
+                width += childWidth;
         }
-        const [boxX] = box.get_transformed_position();
-        const [, boxWidth] = box.get_size();
-        return Number.isFinite(boxX) ? boxX + boxWidth : null;
+        return width;
     }
 
     // ------------------------------------------------------------------ 绘制 --
