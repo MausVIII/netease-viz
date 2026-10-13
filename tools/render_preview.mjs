@@ -14,7 +14,7 @@ const PANEL_W = 236;   // 线条区宽度（面板像素）
 const PANEL_H = 28;    // 顶栏高度（面板像素）
 const ZOOM = 5;        // 放大倍数，方便看清动态模糊
 const GAP = 6;         // 格子间距（面板像素）
-const N_BANDS = 24;
+const N_BANDS = 48;
 const TRAIL = 7;
 
 // 造一段"像音乐"的频段序列：低频有鼓点、中频有旋律、高频有沙沙的镲

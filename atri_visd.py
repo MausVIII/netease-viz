@@ -43,7 +43,7 @@ STATE_PATH = RUNTIME_DIR / 'state.json'
 LOCK_PATH = RUNTIME_DIR / 'daemon.lock'
 
 # 音频频段数量（扩展侧按收到的数组长度画，不写死；这里只用于占位）
-NBARS = 24
+NBARS = 48
 
 # 暂停后仍然把歌词留在顶栏一会儿，别一按暂停就消失
 PAUSE_LINGER_SEC = 12.0

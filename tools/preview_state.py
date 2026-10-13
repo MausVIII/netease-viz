@@ -23,7 +23,7 @@ from pathlib import Path
 RUNTIME_DIR = Path(os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}') / 'atri-visualizer'
 STATE_PATH = RUNTIME_DIR / 'state.json'
 
-NBARS = 24
+NBARS = 48
 
 # (原词, 翻译)：中文歌翻译留空 → 单栏；外文歌有翻译 → 左中文、右原词双栏
 LINES = [

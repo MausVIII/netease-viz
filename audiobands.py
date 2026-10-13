@@ -28,10 +28,11 @@ import time
 
 import numpy as np
 
-N_BANDS = 24
+N_BANDS = 48
 SAMPLE_RATE = 48000
 CHANNELS = 2
 FFT_SIZE = 1024          # 21ms 窗，够分辨低频又不至于糊
+FFT_PAD = 2048           # 零填充：频点细一倍，48 段在低频才分得开（不增加延迟）
 HOP = 512                # 11.6ms 一帧 → 约 86fps，守护进程按自己的节奏取最新一帧
 F_MIN = 40.0             # 低频起点
 F_MAX = 16000.0          # 高频终点
@@ -179,7 +180,7 @@ class Analyzer:
         # device 可以是 sink 节点名（推荐），也可以是节点 id（会翻译成名字）
         self.device = device
         self._window = np.hanning(FFT_SIZE).astype(np.float32)
-        self._edges = _band_edges(FFT_SIZE // 2 + 1)
+        self._edges = _band_edges(FFT_PAD // 2 + 1)
         self._floor = np.full(N_BANDS, np.nan, dtype=np.float32)  # 每个频段的噪声底（首帧确定）
         self._peak = np.full(N_BANDS, np.nan, dtype=np.float32)   # 每个频段的峰值参照
         self._global_floor = float('nan')                         # 整体响度的噪声底
@@ -393,7 +394,7 @@ class Analyzer:
     def _analyze(self, frame: np.ndarray) -> None:
         frame = np.nan_to_num(frame, nan=0.0, posinf=0.0, neginf=0.0)
         frame = frame - float(np.mean(frame))          # 去直流
-        spectrum = np.abs(np.fft.rfft(frame * self._window))
+        spectrum = np.abs(np.fft.rfft(frame * self._window, n=FFT_PAD))
         power = spectrum * spectrum
         bands_db = np.empty(N_BANDS, dtype=np.float32)
         for i in range(N_BANDS):
