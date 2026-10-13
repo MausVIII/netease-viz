@@ -1,7 +1,7 @@
 // 冒烟测试专用扩展：在无头 GNOME Shell 里截图顶栏 + 写几何报告。
 //
 // 用进程内的 Shell.Screenshot（走 D-Bus 会被权限白名单拦掉，进程内不会），
-// 把面板左/中/右三个 box 和我们的两个控件的位置尺寸写进 $ATRI_SMOKE_DIR/report.txt。
+// 把面板左/中/右三个 box 和我们的两个控件的位置尺寸写进 $VIZ_SMOKE_DIR/report.txt。
 // 只在 smoke.sh 造的隔离会话里启用，不会进真实会话。
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -11,7 +11,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
 
-const OUT_DIR = GLib.getenv('ATRI_SMOKE_DIR') ?? '/tmp/atri-smoke';
+const OUT_DIR = GLib.getenv('VIZ_SMOKE_DIR') ?? '/tmp/viz-smoke';
 
 function append(text) {
     GLib.mkdir_with_parents(OUT_DIR, 0o755);
@@ -40,7 +40,7 @@ function findByName(actor, name) {
     return null;
 }
 
-export default class AtriShotExtension extends Extension {
+export default class VizShotExtension extends Extension {
     enable() {
         this._timers = [];
         const schedule = [
@@ -79,7 +79,7 @@ export default class AtriShotExtension extends Extension {
             for (const child of box.get_children())
                 lines.push(describe(child));
         }
-        for (const name of ['atri-visualizer', 'atri-lyric-view']) {
+        for (const name of ['netease-viz', 'nv-lyric-view']) {
             const actor = findByName(Main.panel, name);
             lines.push(`  [${name}] ${actor ? '' : '未找到'}`);
             if (actor) {

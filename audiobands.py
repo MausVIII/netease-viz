@@ -216,8 +216,8 @@ class Analyzer:
             return
         self._stop = False
         self._alive = True
-        self._worker = threading.Thread(target=self._worker_loop, name='atri-bands-worker', daemon=True)
-        self._reader = threading.Thread(target=self._reader_loop, name='atri-bands-reader', daemon=True)
+        self._worker = threading.Thread(target=self._worker_loop, name='viz-bands-worker', daemon=True)
+        self._reader = threading.Thread(target=self._reader_loop, name='viz-bands-reader', daemon=True)
         self._worker.start()
         self._reader.start()
 
@@ -314,7 +314,7 @@ class Analyzer:
             elif not any('monitor' in s for s in sources):
                 self.last_error = '抓音流没有连到 sink 的 monitor'
 
-        threading.Thread(target=check, name='atri-bands-guard', daemon=True).start()
+        threading.Thread(target=check, name='viz-bands-guard', daemon=True).start()
 
     def _reader_loop(self) -> None:
         backoff = 1.0

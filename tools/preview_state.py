@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """预览用假状态源（零依赖）。
 
-不抓音频、不连网易云，直接按协议往 $XDG_RUNTIME_DIR/atri-visualizer/state.json
+不抓音频、不连网易云，直接按协议往 $XDG_RUNTIME_DIR/netease-viz/state.json
 写假数据，让顶栏扩展可以单独调画面：
 
     tools/preview_state.py                       一直跑到 Ctrl-C
     tools/preview_state.py --seconds 30          跑 30 秒就停
     tools/preview_state.py --line-seconds 2      每 2 秒换一句（冒烟测试用）
 
-真机播放走 atri_visd.py，两者写同一种 state.json，扩展不需要区分。
+真机播放走 vizd.py，两者写同一种 state.json，扩展不需要区分。
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import os
 import time
 from pathlib import Path
 
-RUNTIME_DIR = Path(os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}') / 'atri-visualizer'
+RUNTIME_DIR = Path(os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}') / 'netease-viz'
 STATE_PATH = RUNTIME_DIR / 'state.json'
 
 NBARS = 48
@@ -28,9 +28,9 @@ NBARS = 48
 # (原词, 翻译)：中文歌翻译留空 → 单栏；外文歌有翻译 → 左中文、右原词双栏
 LINES = [
     ("続く物語の真ん中で", "在这延续的故事中"),
-    ("『高性能』的顶栏，是亚托莉亲自做的", ""),
+    ("窗外的雨停了，我们还在唱", ""),
     ("沈むように溶けてゆくように", "如同沉没般、如同融化般"),
-    ("上句向上淡出，下句从下面慢慢升上来", ""),
+    ("把音量再调大一点，让夜色亮起来", ""),
     ("Never gonna give you up", "永远不会放弃你"),
 ]
 
@@ -60,8 +60,8 @@ def publish(bands: list[float], level: float, line: str, translation: str, index
         'visible': True,
         'playing': True,
         'player': 'org.mpris.MediaPlayer2.netease_cloud_music_gtk4',
-        'title': '预览：ATRI 顶栏可视化',
-        'artist': 'ATRI',
+        'title': '预览：网易云顶栏可视化',
+        'artist': '网易云',
         'album': '',
         'duration_ms': int(seconds_per_line * len(LINES) * 1000),
         'position_ms': int((time.monotonic() % (seconds_per_line * len(LINES))) * 1000),
@@ -82,7 +82,7 @@ def publish(bands: list[float], level: float, line: str, translation: str, index
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description='ATRI 顶栏可视化 · 预览假状态源')
+    parser = argparse.ArgumentParser(description='网易云顶栏可视化 · 预览假状态源')
     parser.add_argument('--fps', type=int, default=60, help='刷新率（默认 60）')
     parser.add_argument('--seconds', type=float, default=0.0, help='跑多久后退出，0 = 一直跑')
     parser.add_argument('--line-seconds', type=float, default=4.6, help='每句歌词停留秒数')

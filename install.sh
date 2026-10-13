@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 安装 / 更新 ATRI 顶栏可视化（幂等，可反复跑）。
+# 安装 / 更新 网易云顶栏可视化（幂等，可反复跑）。
 #
 #   ./install.sh                 部署扩展 + 装服务 + 重启后台 + 预热启用列表
 #   ./install.sh --no-autostart  同上，但不设成随图形会话自启
@@ -8,23 +8,23 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-UUID="atri-visualizer@maus.local"
+UUID="netease-viz@maus.local"
 EXT_DIR="$HOME/.local/share/gnome-shell/extensions/$UUID"
-UNIT_DST="$HOME/.config/systemd/user/atri-visualizer.service"
+UNIT_DST="$HOME/.config/systemd/user/netease-viz.service"
 
 echo "==> 部署扩展 → $EXT_DIR"
 mkdir -p "$EXT_DIR"
 rsync -a --delete "$HERE/extension/" "$EXT_DIR/"
-chmod +x "$HERE/atri_visd.py" "$HERE"/tools/*.py "$HERE"/tools/smoke/smoke.sh 2>/dev/null || true
+chmod +x "$HERE/vizd.py" "$HERE"/tools/*.py "$HERE"/tools/smoke/smoke.sh 2>/dev/null || true
 
 echo "==> 安装 systemd --user 服务"
 mkdir -p "$(dirname "$UNIT_DST")"
-cp "$HERE/systemd/atri-visualizer.service" "$UNIT_DST"
+cp "$HERE/systemd/netease-viz.service" "$UNIT_DST"
 systemctl --user daemon-reload
-systemctl --user restart atri-visualizer.service
+systemctl --user restart netease-viz.service
 if [[ "${1:-}" != "--no-autostart" ]]; then
-    systemctl --user enable atri-visualizer.service >/dev/null
-    echo "    已设为随图形会话自启（想取消：systemctl --user disable atri-visualizer）"
+    systemctl --user enable netease-viz.service >/dev/null
+    echo "    已设为随图形会话自启（想取消：systemctl --user disable netease-viz）"
 fi
 
 echo "==> 预热 GNOME 扩展启用列表"
@@ -53,4 +53,4 @@ else
 fi
 
 echo
-systemctl --user --no-pager status atri-visualizer.service | head -5
+systemctl --user --no-pager status netease-viz.service | head -5

@@ -1,11 +1,11 @@
 [Unit]
-Description=ATRI 顶栏音频可视化后台（音频频段 + 网易云歌词）
+Description=网易云顶栏音频可视化后台（音频频段 + 网易云歌词）
 PartOf=graphical-session.target
 After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=/home/maus/.local/share/atri-visualizer/atri_visd.py
+ExecStart=/home/maus/.local/share/netease-viz/vizd.py
 Restart=on-failure
 RestartSec=3
 Nice=5

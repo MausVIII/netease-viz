@@ -1,6 +1,6 @@
 {
-  "uuid": "atri-visualizer@maus.local",
-  "name": "ATRI 顶栏音频可视化",
+  "uuid": "netease-viz@maus.local",
+  "name": "网易云顶栏音频可视化",
   "description": "顶栏左侧的音频可视化线条 + 同步歌词：跟着本机网易云播放，线条随音频上下跳动、颜色线性过渡并带动态模糊拖尾；右侧歌词上句上移淡出、下句从下方升起。不遮挡时钟与右侧状态区。",
   "shell-version": ["45", "46", "47", "48", "49", "50"],
   "version": 1

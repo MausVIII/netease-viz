@@ -8,7 +8,7 @@ import GLib from 'gi://GLib';
 import system from 'system';
 
 import {renderBars, PALETTE_ORDER} from
-    'file:///home/maus/.local/share/gnome-shell/extensions/atri-visualizer@maus.local/bars.js';
+    'file:///home/maus/.local/share/gnome-shell/extensions/netease-viz@maus.local/bars.js';
 
 const PANEL_W = 236;   // 线条区宽度（面板像素）
 const PANEL_H = 28;    // 顶栏高度（面板像素）
@@ -51,7 +51,7 @@ function paintPanel(bands, trail, palette) {
     return surface;
 }
 
-const outPath = ARGV[0] ?? '/tmp/atri-bars-preview.png';
+const outPath = ARGV[0] ?? '/tmp/nv-bars-preview.png';
 const palette = ARGV[1] ?? 'aqua';
 if (!PALETTE_ORDER.includes(palette))
     log(`未知调色板 ${palette}，用 aqua`);

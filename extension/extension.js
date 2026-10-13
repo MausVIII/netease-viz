@@ -1,4 +1,4 @@
-// ATRI 顶栏音频可视化 —— GNOME Shell 扩展（Shell 45 ~ 50）
+// 网易云顶栏音频可视化 —— GNOME Shell 扩展（Shell 45 ~ 50）
 //
 // 顶栏左侧：跟着音频上下跳动、颜色随振幅线性过渡的线条，带动态模糊拖尾。
 // 顶栏右侧：跟着网易云播放进度逐句切换的歌词（上句上移淡出、下句从下方升起）。
@@ -9,8 +9,8 @@
 //   2. 跟着网易云启动 —— 后台服务盯着 MPRIS，网易云一关，顶栏立刻干净。
 //
 // 分工：扩展只负责「读状态 + 画」。音频采样、FFT、MPRIS、歌词抓取都在后台服务
-// atri-visualizer（~/.local/share/atri-visualizer/atri_visd.py）里做，状态通过
-// $XDG_RUNTIME_DIR/atri-visualizer/state.json 传递。扩展不联网、不做 DSP，
+// netease-viz（~/.local/share/netease-viz/vizd.py）里做，状态通过
+// $XDG_RUNTIME_DIR/netease-viz/state.json 传递。扩展不联网、不做 DSP，
 // 后台挂了顶栏也只是安静地隐藏。
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -24,13 +24,13 @@ import St from 'gi://St';
 
 import {renderBars, paletteColor, PALETTES, PALETTE_ORDER, clamp01} from './bars.js';
 
-const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'atri-visualizer', 'config.json']);
-const RUNTIME_DIR = GLib.build_filenamev([GLib.get_user_runtime_dir(), 'atri-visualizer']);
+const CONFIG_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'netease-viz', 'config.json']);
+const RUNTIME_DIR = GLib.build_filenamev([GLib.get_user_runtime_dir(), 'netease-viz']);
 const STATE_PATH = GLib.build_filenamev([RUNTIME_DIR, 'state.json']);
-const CACHE_DIR = GLib.build_filenamev([GLib.get_user_cache_dir(), 'atri-visualizer']);
+const CACHE_DIR = GLib.build_filenamev([GLib.get_user_cache_dir(), 'netease-viz']);
 const FORCE_SHOW = GLib.build_filenamev([CACHE_DIR, 'force-show']);
 const DEBUG_FLAG = GLib.build_filenamev([CACHE_DIR, 'debug']);
-const SERVICE = 'atri-visualizer';
+const SERVICE = 'netease-viz';
 
 const FAST_MS = 16;          // 有画面时约 60fps
 const SLOW_MS = 400;         // 没画面时低频轮询，省电
@@ -79,7 +79,7 @@ function writeConfig(config) {
         GLib.mkdir_with_parents(GLib.path_get_dirname(CONFIG_PATH), 0o755);
         GLib.file_set_contents(CONFIG_PATH, JSON.stringify(config, null, 2));
     } catch (e) {
-        logError(e, 'atri-visualizer: 写配置失败');
+        logError(e, 'netease-viz: 写配置失败');
     }
 }
 
@@ -101,8 +101,8 @@ class LyricView {
         this._closed = false;
 
         this.actor = new St.Widget({
-            name: 'atri-lyric-view',
-            style_class: 'atri-lyric-view',
+            name: 'nv-lyric-view',
+            style_class: 'nv-lyric-view',
             layout_manager: new Clutter.BinLayout(),
             clip_to_allocation: true,
             y_expand: true,
@@ -154,7 +154,7 @@ class LyricView {
     _makeLabel(text, extraClass = '') {
         const label = new St.Label({
             text,
-            style_class: extraClass ? `atri-lyric-label ${extraClass}` : 'atri-lyric-label',
+            style_class: extraClass ? `nv-lyric-label ${extraClass}` : 'nv-lyric-label',
             x_align: this._labelAlign(),
             y_align: Clutter.ActorAlign.CENTER,
             reactive: false,
@@ -169,13 +169,13 @@ class LyricView {
     // 两栏整个作为一个整体参与后面的上移淡出动画。
     _buildRow(line, translation) {
         const row = new St.BoxLayout({
-            style_class: 'atri-lyric-row',
+            style_class: 'nv-lyric-row',
             x_align: this._labelAlign(),
             y_align: Clutter.ActorAlign.CENTER,
             reactive: false,
         });
         const cells = translation && line && translation !== line
-            ? [[translation, 'atri-lyric-zh'], [line, 'atri-lyric-orig']]
+            ? [[translation, 'nv-lyric-zh'], [line, 'nv-lyric-orig']]
             : [[line || translation, '']];
 
         row._labels = cells.map(([value, cls]) => {
@@ -326,7 +326,7 @@ class LyricView {
 
 // ---------------------------------------------------------------- 顶栏组件 --
 
-export default class AtriVisualizerExtension extends Extension {
+export default class NeteaseVizExtension extends Extension {
     enable() {
         this._destroyed = false;
         this._config = readConfig();
@@ -378,7 +378,7 @@ export default class AtriVisualizerExtension extends Extension {
 
     _log(message) {
         if (this._debug)
-            log(`atri-visualizer: ${message}`);
+            log(`netease-viz: ${message}`);
     }
 
     // ------------------------------------------------------------------ 后台 --
@@ -396,22 +396,22 @@ export default class AtriVisualizerExtension extends Extension {
             GLib.spawn_async(null, ['systemctl', '--user', 'restart', SERVICE], null,
                 GLib.SpawnFlags.SEARCH_PATH, null);
         } catch (e) {
-            logError(e, 'atri-visualizer: 重启后台服务失败');
+            logError(e, 'netease-viz: 重启后台服务失败');
         }
     }
 
     // ------------------------------------------------------------------ 构建 --
     _buildBars() {
         this._barRoot = new St.BoxLayout({
-            name: 'atri-visualizer',
-            style_class: 'atri-visualizer',
+            name: 'netease-viz',
+            style_class: 'netease-viz',
             reactive: true,
             y_expand: true,
             x_expand: false,
         });
 
         this._bars = new St.DrawingArea({
-            style_class: 'atri-bars',
+            style_class: 'nv-bars',
             y_expand: true,
             x_expand: false,
         });
@@ -420,7 +420,7 @@ export default class AtriVisualizerExtension extends Extension {
         this._barRoot.add_child(this._bars);
 
         this._divider = new St.Widget({
-            style_class: 'atri-divider',
+            style_class: 'nv-divider',
             y_expand: false,
             y_align: Clutter.ActorAlign.CENTER,
             x_expand: false,
@@ -460,7 +460,7 @@ export default class AtriVisualizerExtension extends Extension {
         const panel = Main.panel;
         const leftBox = panel._leftBox ?? panel.statusArea?.activities?.container?.get_parent();
         if (!leftBox) {
-            logError(new Error('找不到顶栏左侧 box'), 'atri-visualizer');
+            logError(new Error('找不到顶栏左侧 box'), 'netease-viz');
             this._barRoot.visible = false;
             return;
         }
@@ -583,7 +583,7 @@ export default class AtriVisualizerExtension extends Extension {
         }
     }
 
-    // 开 ~/.cache/atri-visualizer/debug 后每秒往 journal 打一行：用来确认真的画出来了
+    // 开 ~/.cache/netease-viz/debug 后每秒往 journal 打一行：用来确认真的画出来了
     _debugLog(state) {
         try {
             const box = this._bars.get_allocation_box();
@@ -592,14 +592,14 @@ export default class AtriVisualizerExtension extends Extension {
             const anchor = Main.panel._centerBox;
             const [centerX] = anchor ? anchor.get_transformed_position() : [NaN];
             const centerW = anchor ? anchor.get_preferred_width(-1)[1] : 0;
-            log(`atri-visualizer: 可见=${this._visible} 线区=${box.x2 - box.x1}x${box.y2 - box.y1}` +
+            log(`netease-viz: 可见=${this._visible} 线区=${box.x2 - box.x1}x${box.y2 - box.y1}` +
                 ` 线@${Math.round(widgetX)} 词@${Math.round(lyricX)}(宽${this._lyrics._width},${this._lyricHome})` +
                 ` 时钟=${Math.round(centerX)}..${Math.round(centerX + centerW)}` +
                 ` 响度=${state.level} 歌词="${state.line ?? ''}"`);
             if (this._updateBudget_trace)
-                log(`atri-visualizer: 右区控件 ${this._updateBudget_trace}`);
+                log(`netease-viz: 右区控件 ${this._updateBudget_trace}`);
         } catch (e) {
-            logError(e, 'atri-visualizer: 调试输出失败');
+            logError(e, 'netease-viz: 调试输出失败');
         }
     }
 
@@ -694,7 +694,7 @@ export default class AtriVisualizerExtension extends Extension {
             if (this._debug) {
                 this._updateBudget_trace = Main.panel._rightBox.get_children().map(child => {
                     const [x] = child.get_transformed_position();
-                    const [, width] = child.get_size();
+                    const [width] = child.get_size();
                     const [, preferred] = child.get_preferred_width(-1);
                     const tag = child === this._lyrics.actor ? '[词]' : (child.get_name() || '·');
                     return `${tag}@${Math.round(x)} alloc=${Math.round(width)} pref=${Math.round(preferred)}`;
@@ -705,7 +705,7 @@ export default class AtriVisualizerExtension extends Extension {
             this._lyrics.setVisible(true);
             this._divider.visible = mode === 'after-bars';
         } catch (e) {
-            logError(e, 'atri-visualizer: 宽度预算计算失败');
+            logError(e, 'netease-viz: 宽度预算计算失败');
         }
     }
 
@@ -740,7 +740,7 @@ export default class AtriVisualizerExtension extends Extension {
                 {trail: this._trail, palette: this._config.palette, glow: true,
                  gamma: 1 / (this._config.sensitivity || 1)});
         } catch (e) {
-            logError(e, 'atri-visualizer: 绘制失败');
+            logError(e, 'netease-viz: 绘制失败');
         } finally {
             try {
                 ctx.$dispose();

@@ -50,7 +50,7 @@ HTTP_HEADERS = {
     'Accept': 'application/json, text/plain, */*',
 }
 
-CACHE_DIR = Path(os.environ.get('XDG_CACHE_HOME') or (Path.home() / '.cache')) / 'atri-visualizer' / 'lyrics'
+CACHE_DIR = Path(os.environ.get('XDG_CACHE_HOME') or (Path.home() / '.cache')) / 'netease-viz' / 'lyrics'
 
 _TAG_RE = re.compile(r'\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]')
 _META_RE = re.compile(r'^\[(ti|ar|al|by|offset|re|ve|kana):', re.IGNORECASE)
@@ -224,7 +224,7 @@ class LyricsTracker:
 
     def _discover(self, now: float) -> None:
         """在会话总线上找网易云。总线名/Identity 命中即认。"""
-        override = os.environ.get('ATRI_VIZ_MPRIS')
+        override = os.environ.get('VIZ_MPRIS')
         candidates: list[str] = []
         if override:
             candidates = [override]

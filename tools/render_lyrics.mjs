@@ -5,7 +5,7 @@ import cairo from 'gi://cairo';
 import Pango from 'gi://Pango';
 import PangoCairo from 'gi://PangoCairo';
 
-const OUT = ARGV[0] ?? '/tmp/atri-lyrics-preview.png';
+const OUT = ARGV[0] ?? '/tmp/viz-lyrics-preview.png';
 const PANEL_W = 300;   // 歌词区宽度（面板像素）
 const PANEL_H = 28;    // 顶栏高度
 const ZOOM = 4;

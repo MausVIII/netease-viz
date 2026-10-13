@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""ATRI 顶栏音频可视化 —— 后台服务
+"""网易云顶栏音频可视化 —— 后台服务
 
-一帧一帧地把「现在该画什么」写进 $XDG_RUNTIME_DIR/atri-visualizer/state.json：
+一帧一帧地把「现在该画什么」写进 $XDG_RUNTIME_DIR/netease-viz/state.json：
 
     · bands  : 24 个频段能量（音节跳动 + 颜色渐变的原料）
     · level  : 整体响度（线条亮度/染色跟着它走）
     · line   : 当前该显示的歌词（顶栏扩展负责"上移淡出、从下面升起"的动画）
 
-顶栏扩展（GNOME Shell 扩展 atri-visualizer@maus.local）只读这个文件，
+顶栏扩展（GNOME Shell 扩展 netease-viz@maus.local）只读这个文件，
 不联网、不做 DSP；音频采样在 audiobands.py，歌词在 lyrics.py，各自单文件。
 
 两条省电规则：
@@ -15,10 +15,10 @@
     · 长时间没画面就把音频采集关掉，等网易云回来了再开。
 
 用法：
-    atri_visd.py                 # 正常跑：有播放器就采音频 + 抓歌词
-    atri_visd.py --test          # 合成音频（不碰真实音频）便于验证画面
-    atri_visd.py --print         # 跑在前台并把每帧状态打到 stdout
-    atri_visd.py --fps 45        # 换帧率
+    vizd.py                 # 正常跑：有播放器就采音频 + 抓歌词
+    vizd.py --test          # 合成音频（不碰真实音频）便于验证画面
+    vizd.py --print         # 跑在前台并把每帧状态打到 stdout
+    vizd.py --fps 45        # 换帧率
 """
 
 from __future__ import annotations
@@ -37,8 +37,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from audiobands import Analyzer, SyntheticAnalyzer  # noqa: E402
 from lyrics import LyricsTracker  # noqa: E402
 
-RUNTIME_DIR = Path(os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}') / 'atri-visualizer'
-CONFIG_PATH = Path(os.environ.get('XDG_CONFIG_HOME') or (Path.home() / '.config')) / 'atri-visualizer' / 'config.json'
+RUNTIME_DIR = Path(os.environ.get('XDG_RUNTIME_DIR') or f'/run/user/{os.getuid()}') / 'netease-viz'
+CONFIG_PATH = Path(os.environ.get('XDG_CONFIG_HOME') or (Path.home() / '.config')) / 'netease-viz' / 'config.json'
 STATE_PATH = RUNTIME_DIR / 'state.json'
 LOCK_PATH = RUNTIME_DIR / 'daemon.lock'
 
@@ -93,7 +93,7 @@ class VisualizerDaemon:
         try:
             fcntl.flock(self._lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
-            print('[atri-visd] 已经有一个后台服务在跑了，这个实例退出', file=sys.stderr, flush=True)
+            print('[vizd] 已经有一个后台服务在跑了，这个实例退出', file=sys.stderr, flush=True)
             raise SystemExit(0)
         self._lock_file.write(f'{os.getpid()}\n')
         self._lock_file.flush()
@@ -158,7 +158,7 @@ class VisualizerDaemon:
             # 采集器不支持重启：以后就一直开着，只是多花一点电
             self.analyzer_can_restart = False
             self.analyzer_running = True
-            print(f'[atri-visd] 音频采集开关失败，改为常开：{exc}', file=sys.stderr, flush=True)
+            print(f'[vizd] 音频采集开关失败，改为常开：{exc}', file=sys.stderr, flush=True)
 
     def step(self) -> dict:
         now = time.monotonic()
@@ -239,7 +239,7 @@ class VisualizerDaemon:
         try:
             return self.tracker.poll() or {}
         except Exception as exc:  # 歌词引擎出错也不能拖垮画面
-            print(f'[atri-visd] 歌词引擎异常：{exc}', file=sys.stderr, flush=True)
+            print(f'[vizd] 歌词引擎异常：{exc}', file=sys.stderr, flush=True)
             return {'player': None, 'playing': False, 'line': '', 'status': 'idle'}
 
     @staticmethod
@@ -258,11 +258,11 @@ class VisualizerDaemon:
                                 encoding='utf-8')
             os.replace(tmp_path, STATE_PATH)
         except Exception as exc:
-            print(f'[atri-visd] 写状态失败：{exc}', file=sys.stderr, flush=True)
+            print(f'[vizd] 写状态失败：{exc}', file=sys.stderr, flush=True)
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description='ATRI 顶栏可视化后台服务')
+    parser = argparse.ArgumentParser(description='网易云顶栏可视化后台服务')
     parser.add_argument('--fps', type=int, default=60, help='状态刷新帧率（默认 60）')
     parser.add_argument('--test', action='store_true', help='用合成音频，不抓真实声音')
     parser.add_argument('--print', dest='verbose', action='store_true', help='把每帧摘要打到 stdout')
